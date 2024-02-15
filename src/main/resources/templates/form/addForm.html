@@ -36,6 +36,36 @@
 
         <hr class="my-4">
 
+        <!-- single checkbox -->
+        <div>판매 여부</div>
+        <div>
+            <div class="form-check">
+                <input type="checkbox" id="open" th:field="*{open}" class="form-check-input">
+                <!--
+                    HTML checkbox는 선택이 안되면 클라이언트에서 서버로 값 자체를 보내지 않음
+                    이러한 경우 스프링에서는 트릭을 사용하여 _open 같은 히든 필드를 생성하여
+                    checkbox 값이 넘어오지 않고 히든 필드 값만 넘어오면 checkbox 값을 false로 인식
+                    하지만 이런 경우 매 체크박스마다 히든 필드를 만들어야 되는 번거로움이 발생
+                    => 타임리프로 해결
+                 -->
+                <!-- <input type="hidden" name="_open" value="on"/> -->
+                <label for="open" class="form-check-label">판매 오픈</label>
+
+            </div>
+        </div>
+
+        <!-- multi checkbox -->
+        <div>
+            <div>등록 지역</div>
+            <div th:each="region : ${regions}" class="form-check form-check-inline">
+                <!-- 타임리프는 th:field 에 지정한 값과 th:value 의 값을 비교해서 체크를 자동으로 처리해줌 -->
+                <input type="checkbox" th:field="*{regions}" th:value="${region.key}" class="form-check-input">
+                <!-- 타임리프는 #ids.prev(...) , #ids.next(...) 을 제공해서 동적으로 생성되는 id 값을 사용할 수 있는 기능 제공 -->
+                <label th:for="${#ids.prev('regions')}"
+                       th:text="${region.value}" class="form-check-label">서울</label>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col">
                 <button class="w-100 btn btn-primary btn-lg" type="submit">상품 등록</button>
