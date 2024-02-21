@@ -8,6 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -74,8 +78,52 @@ public class FormItemController {
         return "form/addForm";
     }
 
+    /**
+     *  BindingResult 파라미터는 반드시 @ModelAttribute 어노테이션 파라미터 바로 뒤에 위치해야 함!
+     *
+     *  <스프링의 바인딩 오류 처리>
+     * 타입 오류로 바인딩에 실패하면 스프링은 FieldError 를 생성하면서 사용자가 입력한 값을 넣어둠.
+     * 그리고 해당 오류를 BindingResult 에 담아서 컨트롤러를 호출.
+     *  따라서 타입 오류 같은 바인딩 실패시에도 사용자가 잘못 입력한 값을 그대로 정상적으로 출력 가능
+     *  */
     @PostMapping("/add")
-    public String addItem(@ModelAttribute Item item, RedirectAttributes redirectAttributes) {
+    public String addItem(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+
+        if (!StringUtils.hasText(item.getItemName())) {
+            /**
+             * <FieldError 생성자 파라미터 목록>
+             * objectName : 오류가 발생한 객체 이름
+             * field : 오류 필드
+             * rejectedValue : 사용자가 입력한 값(거절된 값)
+             * bindingFailure : 타입 오류 같은 바인딩 실패인지, 검증 실패인지 구분 값
+             * codes : 메시지 코드
+             * arguments : 메시지에서 사용하는 인자
+             * defaultMessage : 기본 오류 메시지
+             */
+            bindingResult.addError(
+                    new FieldError("item", "itemName", item.getItemName(), false, null, null, "상품 이름은 필수입니다.")
+            );
+        }
+
+        if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+            bindingResult.addError(
+                    new FieldError("item", "itemPrice", item.getPrice(), false, null, null,  "가격은 1,000 ~ 1,000,000 까지 허용합니다.")
+            );
+        }
+
+        //특정 필드 예외가 아닌 전체 예외
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if (resultPrice < 10000) {
+                bindingResult.addError(new ObjectError("item", null, null, "가격 * 수량 의 합은 10,000원 이상이어야 합니다. 현재 값 = " + resultPrice));
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("error={}", bindingResult);
+            return "form/addForm";
+        }
+
         log.info("item.open={}", item.getOpen());
         log.info("item.regions={}", item.getRegions());
         log.info("item.itemTypes={}", item.getItemType());
