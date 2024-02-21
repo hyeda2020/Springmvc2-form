@@ -84,7 +84,7 @@ public class FormItemController {
      *  <스프링의 바인딩 오류 처리>
      * 타입 오류로 바인딩에 실패하면 스프링은 FieldError 를 생성하면서 사용자가 입력한 값을 넣어둠.
      * 그리고 해당 오류를 BindingResult 에 담아서 컨트롤러를 호출.
-     *  따라서 타입 오류 같은 바인딩 실패시에도 사용자가 잘못 입력한 값을 그대로 정상적으로 출력 가능
+     * 따라서 타입 오류 같은 바인딩 실패시에도 사용자가 잘못 입력한 값을 그대로 정상적으로 출력 가능
      *  */
     @PostMapping("/add")
     public String addItem(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
@@ -107,7 +107,13 @@ public class FormItemController {
 
         if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
             bindingResult.addError(
-                    new FieldError("item", "itemPrice", item.getPrice(), false, null, null,  "가격은 1,000 ~ 1,000,000 까지 허용합니다.")
+                    new FieldError("item", "price", item.getPrice(), false, null, null,  "가격은 1,000 ~ 1,000,000 까지 허용합니다.")
+            );
+        }
+
+        if (item.getQuantity() == null || item.getQuantity() >= 9999) {
+            bindingResult.addError(
+                    new FieldError("item", "quantity", item.getQuantity(), false, null, null,  "수량은 최대 9,999 까지 허용합니다.")
             );
         }
 
