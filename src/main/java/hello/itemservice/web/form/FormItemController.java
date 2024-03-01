@@ -89,39 +89,32 @@ public class FormItemController {
     @PostMapping("/add")
     public String addItem(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
+        /**
+         * RejectValue, Reject 메서드 파라미터
+         * field : 오류 필드명
+         * errorCode : 오류 코드(이 오류 코드는 메시지에 등록된 코드가 아니다. 뒤에서 설명할
+         * messageResolver를 위한 오류 코드이다.)
+         * errorArgs : 오류 메시지에서 {0} 을 치환하기 위한 값
+         * defaultMessage : 오류 메시지를 찾을 수 없을 때 사용하는 기본 메시지
+         */
+
         if (!StringUtils.hasText(item.getItemName())) {
-            /**
-             * <FieldError 생성자 파라미터 목록>
-             * objectName : 오류가 발생한 객체 이름
-             * field : 오류 필드
-             * rejectedValue : 사용자가 입력한 값(거절된 값)
-             * bindingFailure : 타입 오류 같은 바인딩 실패인지, 검증 실패인지 구분 값
-             * codes : 메시지 코드
-             * arguments : 메시지에서 사용하는 인자
-             * defaultMessage : 기본 오류 메시지
-             */
-            bindingResult.addError(
-                    new FieldError("item", "itemName", item.getItemName(), false, null, null, "상품 이름은 필수입니다.")
-            );
+            bindingResult.rejectValue("itemName", "required");
         }
 
         if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
-            bindingResult.addError(
-                    new FieldError("item", "price", item.getPrice(), false, null, null,  "가격은 1,000 ~ 1,000,000 까지 허용합니다.")
-            );
+            bindingResult.rejectValue("price", "range", new Object[] {1000, 1000000}, null);
         }
 
         if (item.getQuantity() == null || item.getQuantity() >= 9999) {
-            bindingResult.addError(
-                    new FieldError("item", "quantity", item.getQuantity(), false, null, null,  "수량은 최대 9,999 까지 허용합니다.")
-            );
+            bindingResult.rejectValue("quantity", "max", new Object[]{9999}, null);
         }
 
         //특정 필드 예외가 아닌 전체 예외
         if (item.getPrice() != null && item.getQuantity() != null) {
             int resultPrice = item.getPrice() * item.getQuantity();
             if (resultPrice < 10000) {
-                bindingResult.addError(new ObjectError("item", null, null, "가격 * 수량 의 합은 10,000원 이상이어야 합니다. 현재 값 = " + resultPrice));
+                bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
             }
         }
 
