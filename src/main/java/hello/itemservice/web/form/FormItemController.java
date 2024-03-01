@@ -12,6 +12,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -27,6 +29,13 @@ import java.util.Map;
 public class FormItemController {
 
     private final ItemRepository itemRepository;
+    private final ItemValidator itemValidator;
+
+    @InitBinder
+    public void init(WebDataBinder webDataBinder) {
+        // WebDataBinder에 itemValidator 검증기 추가
+        webDataBinder.addValidators(itemValidator);
+    }
 
     /**
      * <@ModelAttribute의 특별한 사용법>
@@ -87,36 +96,13 @@ public class FormItemController {
      * 따라서 타입 오류 같은 바인딩 실패시에도 사용자가 잘못 입력한 값을 그대로 정상적으로 출력 가능
      *  */
     @PostMapping("/add")
-    public String addItem(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+    public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
         /**
-         * RejectValue, Reject 메서드 파라미터
-         * field : 오류 필드명
-         * errorCode : 오류 코드(이 오류 코드는 메시지에 등록된 코드가 아니다. 뒤에서 설명할
-         * messageResolver를 위한 오류 코드이다.)
-         * errorArgs : 오류 메시지에서 {0} 을 치환하기 위한 값
-         * defaultMessage : 오류 메시지를 찾을 수 없을 때 사용하는 기본 메시지
+         * Item 클래스에 대해 WebDateBinder에 등록된 검증기를 실행하라는 @Validated 애노테이션 추가하고
+         * itemValidator.validate 메서드 호출 소스 부분은 주석 처리
          */
-
-        if (!StringUtils.hasText(item.getItemName())) {
-            bindingResult.rejectValue("itemName", "required");
-        }
-
-        if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
-            bindingResult.rejectValue("price", "range", new Object[] {1000, 1000000}, null);
-        }
-
-        if (item.getQuantity() == null || item.getQuantity() >= 9999) {
-            bindingResult.rejectValue("quantity", "max", new Object[]{9999}, null);
-        }
-
-        //특정 필드 예외가 아닌 전체 예외
-        if (item.getPrice() != null && item.getQuantity() != null) {
-            int resultPrice = item.getPrice() * item.getQuantity();
-            if (resultPrice < 10000) {
-                bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
-            }
-        }
+        // itemValidator.validate(item, bindingResult);
 
         if (bindingResult.hasErrors()) {
             log.info("error={}", bindingResult);
