@@ -29,13 +29,15 @@ import java.util.Map;
 public class FormItemController {
 
     private final ItemRepository itemRepository;
-    private final ItemValidator itemValidator;
 
-    @InitBinder
-    public void init(WebDataBinder webDataBinder) {
-        // WebDataBinder에 itemValidator 검증기 추가
-        webDataBinder.addValidators(itemValidator);
-    }
+    /* BeanValidator 도입으로 인한 주석 처리 */
+//    private final ItemValidator itemValidator;
+
+//    @InitBinder
+//    public void init(WebDataBinder webDataBinder) {
+//        // WebDataBinder에 itemValidator 검증기 추가
+//        webDataBinder.addValidators(itemValidator);
+//    }
 
     /**
      * <@ModelAttribute의 특별한 사용법>
@@ -90,7 +92,7 @@ public class FormItemController {
     /**
      *  BindingResult 파라미터는 반드시 @ModelAttribute 어노테이션 파라미터 바로 뒤에 위치해야 함!
      *
-     *  <스프링의 바인딩 오류 처리>
+     * <스프링의 바인딩 오류 처리>
      * 타입 오류로 바인딩에 실패하면 스프링은 FieldError 를 생성하면서 사용자가 입력한 값을 넣어둠.
      * 그리고 해당 오류를 BindingResult 에 담아서 컨트롤러를 호출.
      * 따라서 타입 오류 같은 바인딩 실패시에도 사용자가 잘못 입력한 값을 그대로 정상적으로 출력 가능
@@ -101,8 +103,22 @@ public class FormItemController {
         /**
          * Item 클래스에 대해 WebDateBinder에 등록된 검증기를 실행하라는 @Validated 애노테이션 추가하고
          * itemValidator.validate 메서드 호출 소스 부분은 주석 처리
+         *
+         * <2024-03-10 - BeanValidation 적용>
+         * 스프링부트는 자동으로 `LocalValidatorFactoryBean`을 글로벌 Validator로 등록해줌
+         * 이 Validator는 `@NotNull` 같은 애노테이션을 보고 검증을 수행
+         * 이렇게 글로벌 Validator가 적용되어 있기 때문에, `@Valid` , `@Validated` 만 적용하면 됨.
+         * 검증 오류가 발생하면, `FieldError` , `ObjectError` 를 생성해서 `BindingResult` 에 담아줌
          */
         // itemValidator.validate(item, bindingResult);
+
+        //특정 필드 예외가 아닌 전체 예외
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if (resultPrice < 10000) {
+                bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+            }
+        }
 
         if (bindingResult.hasErrors()) {
             log.info("error={}", bindingResult);
@@ -127,10 +143,23 @@ public class FormItemController {
     }
 
     @PostMapping("/{itemId}/edit")
-    public String edit(@PathVariable Long itemId, @ModelAttribute Item item) {
+    public String edit(@PathVariable Long itemId, @Validated @ModelAttribute Item item, BindingResult bindingResult) {
+
+        //특정 필드 예외가 아닌 전체 예외
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if (resultPrice < 10000) {
+                bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("errors={}", bindingResult);
+            return "form/editForm";
+        }
+
         itemRepository.update(itemId, item);
         return "redirect:/form/items/{itemId}";
     }
-
 }
 
