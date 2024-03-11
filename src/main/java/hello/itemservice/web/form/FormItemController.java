@@ -4,6 +4,8 @@ import hello.itemservice.domain.item.DeliveryCode;
 import hello.itemservice.domain.item.Item;
 import hello.itemservice.domain.item.ItemRepository;
 import hello.itemservice.domain.item.ItemType;
+import hello.itemservice.domain.item.form.ItemSaveForm;
+import hello.itemservice.domain.item.form.ItemUpdateForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -98,7 +100,7 @@ public class FormItemController {
      * 따라서 타입 오류 같은 바인딩 실패시에도 사용자가 잘못 입력한 값을 그대로 정상적으로 출력 가능
      *  */
     @PostMapping("/add")
-    public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+    public String addItem(@Validated @ModelAttribute("item") ItemSaveForm form, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
 
         /**
          * Item 클래스에 대해 WebDateBinder에 등록된 검증기를 실행하라는 @Validated 애노테이션 추가하고
@@ -113,8 +115,8 @@ public class FormItemController {
         // itemValidator.validate(item, bindingResult);
 
         //특정 필드 예외가 아닌 전체 예외
-        if (item.getPrice() != null && item.getQuantity() != null) {
-            int resultPrice = item.getPrice() * item.getQuantity();
+        if (form.getPrice() != null && form.getQuantity() != null) {
+            int resultPrice = form.getPrice() * form.getQuantity();
             if (resultPrice < 10000) {
                 bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
             }
@@ -125,9 +127,11 @@ public class FormItemController {
             return "form/addForm";
         }
 
-        log.info("item.open={}", item.getOpen());
-        log.info("item.regions={}", item.getRegions());
-        log.info("item.itemTypes={}", item.getItemType());
+        Item item = new Item(
+                form.getItemName(),
+                form.getPrice(),
+                form.getQuantity()
+        );
 
         Item savedItem = itemRepository.save(item);
         redirectAttributes.addAttribute("itemId", savedItem.getId());
@@ -143,11 +147,11 @@ public class FormItemController {
     }
 
     @PostMapping("/{itemId}/edit")
-    public String edit(@PathVariable Long itemId, @Validated @ModelAttribute Item item, BindingResult bindingResult) {
+    public String edit(@PathVariable Long itemId, @Validated @ModelAttribute("item") ItemUpdateForm form, BindingResult bindingResult) {
 
         //특정 필드 예외가 아닌 전체 예외
-        if (item.getPrice() != null && item.getQuantity() != null) {
-            int resultPrice = item.getPrice() * item.getQuantity();
+        if (form.getPrice() != null && form.getQuantity() != null) {
+            int resultPrice = form.getPrice() * form.getQuantity();
             if (resultPrice < 10000) {
                 bindingResult.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
             }
@@ -157,6 +161,13 @@ public class FormItemController {
             log.info("errors={}", bindingResult);
             return "form/editForm";
         }
+
+        Item item = new Item(
+                form.getItemName(),
+                form.getPrice(),
+                form.getQuantity()
+        );
+        item.setId(form.getId());
 
         itemRepository.update(itemId, item);
         return "redirect:/form/items/{itemId}";
