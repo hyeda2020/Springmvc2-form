@@ -1,4 +1,4 @@
-package hello.itemservice.domain.item.form;
+package hello.itemservice.web.item.form;
 
 import hello.itemservice.domain.item.ItemType;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package hello.itemservice.web.form;
+package hello.itemservice.web.item;
 
 import hello.itemservice.domain.item.Item;
 import org.springframework.stereotype.Component;

@@ -1,21 +1,17 @@
-package hello.itemservice.web.form;
+package hello.itemservice.web.item;
 
 import hello.itemservice.domain.item.DeliveryCode;
 import hello.itemservice.domain.item.Item;
 import hello.itemservice.domain.item.ItemRepository;
 import hello.itemservice.domain.item.ItemType;
-import hello.itemservice.domain.item.form.ItemSaveForm;
-import hello.itemservice.domain.item.form.ItemUpdateForm;
+import hello.itemservice.web.item.form.ItemSaveForm;
+import hello.itemservice.web.item.form.ItemUpdateForm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -28,7 +24,7 @@ import java.util.Map;
 @Controller
 @RequestMapping("/form/items")
 @RequiredArgsConstructor
-public class FormItemController {
+public class ItemController {
 
     private final ItemRepository itemRepository;
 
@@ -130,7 +126,11 @@ public class FormItemController {
         Item item = new Item(
                 form.getItemName(),
                 form.getPrice(),
-                form.getQuantity()
+                form.getQuantity(),
+                form.getOpen(),
+                form.getRegions(),
+                form.getItemType(),
+                form.getDeliveryCode()
         );
 
         Item savedItem = itemRepository.save(item);
@@ -165,7 +165,11 @@ public class FormItemController {
         Item item = new Item(
                 form.getItemName(),
                 form.getPrice(),
-                form.getQuantity()
+                form.getQuantity(),
+                form.getOpen(),
+                form.getRegions(),
+                form.getItemType(),
+                form.getDeliveryCode()
         );
         item.setId(form.getId());
 

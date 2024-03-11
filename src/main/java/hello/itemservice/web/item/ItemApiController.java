@@ -1,6 +1,6 @@
-package hello.itemservice.web.form;
+package hello.itemservice.web.item;
 
-import hello.itemservice.domain.item.form.ItemSaveForm;
+import hello.itemservice.web.item.form.ItemSaveForm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/form/api/items")
-public class FormItemApiController {
+public class ItemApiController {
 
     /**
      * @ModelAttribute 는 필드 단위로 정교하게 바인딩이 적용됨.

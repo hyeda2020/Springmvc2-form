@@ -1,11 +1,6 @@
 package hello.itemservice.domain.item;
 
 import lombok.Data;
-
-import org.hibernate.validator.constraints.Range;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Max;
 import java.util.List;
 
 @Data
@@ -28,5 +23,15 @@ public class Item {
         this.itemName = itemName;
         this.price = price;
         this.quantity = quantity;
+    }
+
+    public Item(String itemName, Integer price, Integer quantity, Boolean open, List<String> regions, ItemType itemType, String deliveryCode) {
+        this.itemName = itemName;
+        this.price = price;
+        this.quantity = quantity;
+        this.open = open;
+        this.regions = regions;
+        this.itemType = itemType;
+        this.deliveryCode = deliveryCode;
     }
 }

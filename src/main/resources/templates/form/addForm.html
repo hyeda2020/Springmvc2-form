@@ -78,8 +78,7 @@
                 <!-- 타임리프는 th:field 에 지정한 값과 th:value 의 값을 비교해서 체크를 자동으로 처리해줌 -->
                 <input type="checkbox" th:field="*{regions}" th:value="${region.key}" class="form-check-input">
                 <!-- 타임리프는 #ids.prev(...) , #ids.next(...) 을 제공해서 동적으로 생성되는 id 값을 사용할 수 있는 기능 제공 -->
-                <label th:for="${#ids.prev('regions')}"
-                       th:text="${region.value}" class="form-check-label">서울</label>
+                <label th:for="${#ids.prev('regions')}" th:text="${region.value}" class="form-check-label">서울</label>
         </div>
         <!-- radio button -->
         <!--
@@ -90,12 +89,8 @@
         <div>
             <div>상품 종류</div>
             <div th:each="type : ${itemTypes}" class="form-check form-check-inline">
-                <input type="radio" th:field="*{itemType}" th:value="${type.name()}"
-                       class="form-check-input">
-                <label th:for="${#ids.prev('itemType')}" th:text="${type.description}"
-                       class="form-check-label">
-                    BOOK
-                </label>
+                <input type="radio" th:field="*{itemType}" th:value="${type.name()}" class="form-check-input">
+                <label th:for="${#ids.prev('itemType')}" th:text="${type.description}" class="form-check-label">BOOK</label>
             </div>
         </div>
         <!-- SELECT -->
