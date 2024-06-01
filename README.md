@@ -33,7 +33,7 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
   ```
   
 
-- 국제화
+- 국제화 : 
   메시지에서 설명한 메시지 파일(messages.properties)을 각 나라별로 별도로 관리하면 서비스를 국제화 할 수 있음.  
     
   <messages_en.properties>
