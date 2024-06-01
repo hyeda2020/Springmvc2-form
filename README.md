@@ -1,0 +1,54 @@
+# Springmvc2-form
+리포지토리 설명 : 인프런 김영한님의 강의 '스프링 MVC 2편 - 백엔드 웹 개발 활용 기술' 스터디 정리
+https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
+
+# 1. 메시지, 국제화
+- 메시지 :
+  예를 들어 삼품명, 가격, 수량 등의 label 단어가 하드코딩되어 있을 경우 이를 변경할 때  
+  여러 .html 파일에 있는 해당 label 값들을 일일이 변경해야 되는 변경해야 되는 불편함 발생  
+  -> 다양한 메시지를 한 곳에서 관리하도록 하는 메시지 기능을 사용하여 해결
+
+  <messages.properties>  
+  ```
+  # 메시지 관리용 파일
+  item=상품  
+  item.id=상품 ID  
+  item.itemName=상품명  
+  item.price=가격  
+  item.quantity=수량
+  ```
+
+  이후 각 HTML 파일들은 다음과 같이 해당 데이터를 key 값으로 불러와서 사용
+    
+  <addForm.html>  
+  ```<label for="itemName" th:text="#{item.itemName}"></label>```
+
+  ※ 이러한 메시징 관리 기능을 사용하려면 스프링에서 제공하는 `MessageSource` 인터페이스를 스프링 빈으로 등록하여 사용하면 되는데,  
+  스프링 부트에서는 `MessageSource` 가 자동으로 스프링 빈으로 등록되며 다음과 같이 소스를 설정하면 됨.
+    
+  <application.properties>   
+  ```
+  # 스프링 부트 메시지 소스 기본 값
+  spring.messages.basename=messages
+  ```
+  
+
+- 국제화
+  메시지에서 설명한 메시지 파일(messages.properties)을 각 나라별로 별도로 관리하면 서비스를 국제화 할 수 있음.  
+    
+  <messages_en.properties>
+  ```
+  item=Item
+  item.id=Item ID
+  item.itemName=Item Name
+  item.price=price
+  item.quantity=quantity
+  ```
+  템플릿 파일에 모두 #{...} 를 통해서 메시지를 사용하도록 적용했다면, messages_en.properties을 추가해주기만 하면 국제화 작업은 끝.  
+  웹 브라우저의 언어 설정 값을 변경하면 국제화 적용 확인 가능.  
+  (사실 스프링도 Locale 정보를 알아야 언어를 선택할 수 있는데, 스프링은 언어 선택시 기본으로 AcceptLanguage 헤더의 값을 사용.)
+
+
+
+
+
