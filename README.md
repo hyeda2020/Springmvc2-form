@@ -49,6 +49,83 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
   (사실 스프링도 Locale 정보를 알아야 언어를 선택할 수 있는데, 스프링은 언어 선택시 기본으로 AcceptLanguage 헤더의 값을 사용.)
 
 
+# 2. Validation
+- BindingResult : 스프링이 제공하는 검증 오류를 보관하는 객체로, BindingResult 가 있으면  
+  `@ModelAttribute` 에 데이터 바인딩 시 오류가 발생해도 컨트롤러가 호출됨!  
+  (단, `BindingResult bindingResult` 파라미터의 위치는 반드시 `@ModelAttribute` 변수 바로 뒤에 있어야 함!)    
 
+  ※ BindingResult에 검증 오류를 적용하는 3가지 방법
+  1) `FieldError`, `ObjectError` 사용
+  2) `rejectValue()` , `reject()` 사용
+  3) `Validator` 사용
+ 
+- `FieldError`, `ObjectError`  
+- `rejectValue()`, `reject()` : FieldError, ObjectError를 직접 생성하지 않고, 깔끔하게 검증 오류 처리 가능.
+  ```
+  @PostMapping("/add")
+  public String addItem(@ModelAttribute Item item, BindingResult bindingResult) {
+
+    // 특정 필드(price) 예외
+    if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+      bindingResult.rejectValue(
+        "price",                     // field : 오류 필드명
+        "range",                     // errorCode : 오류 코드(messageResolver)
+        new Object[]{1000, 1000000}, // errorArgs : 오류 메시지에서 {0} 을 치환하기 위한 값
+        null                         // defaultMessage : 오류 메시지를 찾을 수 없을 때 사용하는 기본 메시지
+      );
+    }
+
+    // 특정 필드 예외가 아닌 전체 예외
+    if (item.getPrice() != null && item.getQuantity() != null) {
+      int resultPrice = item.getPrice() * item.getQuantity();
+      if (resultPrice < 10000) {
+        bindingResult.reject(
+          "totalPriceMin",                 // errorCode
+          new Object[]{10000,resultPrice}, // errorArgs
+          null                             // defaultMessage
+        );
+      }
+    }
+
+    ...
+  }
+  ```
+  
+- Validator : `rejectValue()`, `reject()`를 활용한 검증 로직을 스프링에서 제공하는 Validator 인터페이스를 통해 별도 분리하여 관리
+  ```
+  @Component // 스프링 빈으로 등록하여 관리
+  public class ItemValidator implements Validator {
+    @Override
+    public boolean supports(Class<?> clazz) {  // 해당 검증기를 지원하는 여부 확인
+      return Item.class.isAssignableFrom(clazz);
+    }
+  
+    @Override
+    public void validate(Object target, Errors errors) {  // 검증 대상 객체와 BindingResult
+      Item item = (Item) target;
+      // 필드(price) 예외
+      if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+        errors.rejectValue("price", "range", new Object[]{1000, 1000000}, null);
+      }
+      //특정 필드 예외가 아닌 전체 예외
+      if (item.getPrice() != null && item.getQuantity() != null) {
+        int resultPrice = item.getPrice() * item.getQuantity();
+        if (resultPrice < 10000) {
+          errors.reject("totalPriceMin", new Object[]{10000, resultPrice}, null);
+        }
+      }
+  
+      ...
+    }
+  }
+  ```
+  ```
+  @PostMapping("/add")
+  /* @Validated는 검증기를 실행하라는 애노테이션으로, 이 애노테이션이 붙으면 WebDataBinder에 등록한 검증기를 찾아서 실행 */
+  public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult) { ... }
+  ```
+
+  
+  
 
 
