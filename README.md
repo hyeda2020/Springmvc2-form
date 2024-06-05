@@ -167,7 +167,8 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
   ```
 
   - 스프링 부트와 통합
-  스프링 부트는 자동으로 LocalValidatorFactoryBean 을 글로벌 Validator로 등록하며, 이 Validator는 `@NotNull` 같은 애노테이션을 보고 검증을 수행.  
+  스프링 부트는 자동으로 LocalValidatorFactoryBean 을 글로벌 Validator로 등록하며,  
+  이 Validator는 `@NotNull` 같은 애노테이션을 보고 검증을 수행.  
   따라서 스프링 부트에서는 이렇게 글로벌 Validator가 자동으로 적용되어 있기 때문에, `@Valid` , `@Validated` 만 적용하면 됨.  
   ※ 한편, BeanValidator는 바인딩에 실패한 필드는 BeanValidation을 적용하지 않음.  
     
@@ -178,10 +179,12 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
 
   - Bean Validation 한계  
   등록시에는 `id` 에 값이 없어도 되지만, 수정시에는 `id` 값이 필수여야 하는 등 데이터를 등록할 때와 수정할 때 필드에 대한 검증 요구사항이 다를 수 있음.  
-  -> 폼을 등록용과 수정용 객체로 구분하여 관리  
-  ex)  
-  등록용 폼 : ItemSaveForm 객체  
-  수정용 폼 : ItemUpdateForm 객체  
+  -> 폼을 등록용과 수정용 객체로 구분하여 관리
+    
+    ex)  
+    - 등록용 폼 : ItemSaveForm 객체  
+    - 수정용 폼 : ItemUpdateForm 객체  
+    
     
   - Bean Validation HTTP 메시지 컨버터 적용  
   `@Valid` , `@Validated` 는 `HttpMessageConverter`(`@RequestBody`)에도 적용 가능
