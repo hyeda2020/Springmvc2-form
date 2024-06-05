@@ -103,10 +103,12 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
     @Override
     public void validate(Object target, Errors errors) {  // 검증 대상 객체와 BindingResult
       Item item = (Item) target;
+  
       // 필드(price) 예외
       if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
         errors.rejectValue("price", "range", new Object[]{1000, 1000000}, null);
       }
+  
       //특정 필드 예외가 아닌 전체 예외
       if (item.getPrice() != null && item.getQuantity() != null) {
         int resultPrice = item.getPrice() * item.getQuantity();
@@ -125,7 +127,86 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
   public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult) { ... }
   ```
 
-  
-  
+# 3. Bean Validation
+  특정 필드에 대한 검증 로직은 주로 해당 필드가 빈 값인지 아닌지, 특정 크기를 넘는지와 같은 매우 일반적인 로직이며,  
+  이러한 검증 로직을 모든 프로젝트에 적용할 수 있게 공통화하고 표준화 한 것으로,  
+  다음과 같은 검증 애노테이션 지원  
+    
+  `@NotBlank` : 빈값 + 공백만 있는 경우를 허용하지 않음  
+  `@NotNull` : `null` 을 허용하지 않음  
+  `@Range(min = 1000, max = 1000000)` : 범위 안의 값이어야 함    
+  `@Max(9999)` : 최대 9999까지만 허용  
 
+  ex)
+  ```
+  @Data
+  public class Item {
 
+    @NotNull
+    private Long id;
+
+    @NotBlank
+    private String itemName;
+
+    @NotNull
+    @Range(min = 1000, max = 1000000)
+    private Integer price;
+
+    @NotNull
+    @Max(9999)
+    private Integer quantity;
+    ...
+  }
+  ```
+
+  - 스프링과 통합하지 않은 순수 Bean Validation은 다음과 같이 검증기를 직접 생성해서 사용해야 함  
+  ```
+  ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+  Validator validator = factory.getValidator();
+  Set<ConstraintViolation<Item>> violations = validator.validate(item); // 검증 대상(item)을 직접 검증기에 넣고 그 결과를 리턴
+  ```
+
+  - 스프링 부트와 통합
+  스프링 부트는 자동으로 LocalValidatorFactoryBean 을 글로벌 Validator로 등록하며, 이 Validator는 `@NotNull` 같은 애노테이션을 보고 검증을 수행.  
+  따라서 스프링 부트에서는 이렇게 글로벌 Validator가 자동으로 적용되어 있기 때문에, `@Valid` , `@Validated` 만 적용하면 됨.  
+  ※ 한편, BeanValidator는 바인딩에 실패한 필드는 BeanValidation을 적용하지 않음.  
+    
+  - BeanValidator에서 에러 메시지 찾는 순서  
+    1. 생성된 메시지 코드 순서대로 `messageSource` 에서 메시지 찾기  
+    2. 애노테이션의 `message` 속성 사용 -> `@NotBlank(message = "공백! {0}")`  
+    3. 라이브러리가 제공하는 기본 값 사용 -> "공백일 수 없습니다" 
+
+  - Bean Validation 한계  
+  등록시에는 `id` 에 값이 없어도 되지만, 수정시에는 `id` 값이 필수여야 하는 등 데이터를 등록할 때와 수정할 때 필드에 대한 검증 요구사항이 다를 수 있음.  
+  -> 폼을 등록용과 수정용 객체로 구분하여 관리  
+  ex)  
+  등록용 폼 : ItemSaveForm 객체  
+  수정용 폼 : ItemUpdateForm 객체  
+    
+  - Bean Validation HTTP 메시지 컨버터 적용  
+  `@Valid` , `@Validated` 는 `HttpMessageConverter`(`@RequestBody`)에도 적용 가능
+
+    ex)  
+    ```
+    @Slf4j
+    @RestController
+    @RequestMapping("/validation/api/items")
+    public class ValidationItemApiController {
+  
+      @PostMapping("/add")
+      public Object addItem(@RequestBody @Validated ItemSaveForm form, BindingResult bindingResult) {
+        log.info("API 컨트롤러 호출");
+        ...
+      }
+    ```
+      
+    참고)  
+    `@ModelAttribute` 는 HTTP 요청 파라미터(URL 쿼리 스트링, POST Form)를 다룰 때 사용.  
+    `@RequestBody` 는 HTTP Body의 데이터를 객체로 변환할 때 사용하며, 주로 API JSON 요청을 다룰 때 사용.  
+      
+    ※ `@ModelAttribute` vs `@RequestBody`  
+    - `@ModelAttribute` 는 필드 단위로 정교하게 바인딩이 적용되며, 특정 필드가 바인딩 되지 않아도  
+      나머지 필드는 정상 바인딩 되고 Validator를 사용한 검증도 적용할 수 있음.  
+    - 반면, `@RequestBody` 는 HttpMessageConverter 단계에서 JSON 데이터를 객체로 변경하지 못하면  
+      이후 단계 자체가 진행되지 않고 예외가 발생. 컨트롤러도 호출되지 않고, Validator도 적용할 수 없음.  
+    
