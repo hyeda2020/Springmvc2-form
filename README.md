@@ -211,5 +211,60 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
     - `@ModelAttribute` 는 필드 단위로 정교하게 바인딩이 적용되며, 특정 필드가 바인딩 되지 않아도  
       나머지 필드는 정상 바인딩 되고 Validator를 사용한 검증도 적용할 수 있음.  
     - 반면, `@RequestBody` 는 HttpMessageConverter 단계에서 JSON 데이터를 객체로 변경하지 못하면  
-      이후 단계 자체가 진행되지 않고 예외가 발생. 컨트롤러도 호출되지 않고, Validator도 적용할 수 없음.  
+      이후 단계 자체가 진행되지 않고 예외가 발생. 컨트롤러도 호출되지 않고, Validator도 적용할 수 없음.
+
+# 4. 쿠키, 세션
+  - 쿠키 : 사용자의 로그인 상태를 유지하기 위한 방법으로, 서버에서 로그인에 성공하면 HTTP 응답에 쿠키값을 담아서 브라우저에 전달.  
+          그럼 해당 브라우저는 앞으로 요청을 할 때마다 해당 쿠키 값을 지속해서 보내줌.  
+
+    ![image](https://github.com/hyeda2020/Springmvc2-form/assets/139141270/2addbbca-ce38-4e4e-9970-79502d433082)
+
+    ※ 영속쿠키, 세션쿠키  
+    1) 영속쿠키 : 만료 날짜를 입력하면 해당 날짜까지 유지  
+    2) 세션쿠키 : 만료 날짜를 생략하면 브라우저 종료시 까지만 유지  
+    -> 보통 브라우저 종료시 로그아웃 되길 기대하므로 주로 필요한 것은 세션 쿠키.
+
+  - 쿠키와 보안 문제  
+    1) 쿠키 값은 임의로 변경할 수 있으며, 클라이언트가 쿠키를 강제로 변경하면 서버에서는 다른 사용자로 인식할 수 있음.  
+    2) 쿠키에 보관된 정보는 훔쳐갈 수 있음.  
+
+  - 세션 : 쿠키에 중요한 값을 세팅하지 않고 사용자별로 임의의 토큰(랜덤 값)을 전달하며,  
+          서버에서는 토큰과 사용자 ID를 매핑하여 인식. 또한, 이러한 토큰은 서버에서 관리.  
+          또한, 토큰이 해킹되어도 시간이 지나면 사용할 수 없도록 토큰의 만료시간을 짧게 유지(30분)   
+
+    ![image](https://github.com/hyeda2020/Springmvc2-form/assets/139141270/515476ca-97eb-4182-9195-b50b610e3acb)
+
+  - HttpSession
+    서블릿은 세션을 위해 `HttpSession` 이라는 기능을 제공.  
     
+    ```
+    @RequestMapping("/login")
+    public String login(@Validated @ModelAttribute LoginForm form, HttpServletRequest request) {
+      ...
+      // 세션이 있으면 있는 세션 반환, 없으면 신규 세션 생성 (true)
+      HttpSession session = request.getSession(true);
+
+      // 세션에 로그인 회원 정보 보관
+      session.setAttribute(SessionConst.LOGIN_MEMBER.getValue(), loginMember)
+      ...
+    }
+
+    @PostMapping("/logout")
+    public String logout(HttpServletRequest request) {
+      
+      HttpSession session = request.getSession(false);
+      if (session != null) {
+        session.invalidate(); // 세션 삭제
+      }
+      return "redirect:/";
+    }
+    ```
+    
+- @SessionAttribute : 이미 로그인 된 사용자를 찾을 때 스프링에서는 세션을 더 편리하게 사용할 수 있도록 `@SessionAttribute` 제공.
+    
+  ```
+  @GetMapping("/")
+  public String LoginHome(@SessionAttribute(name = "loginMember", required = false) Member member, Model model) {
+    ...
+  }
+  ```
