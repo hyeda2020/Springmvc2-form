@@ -268,3 +268,97 @@ https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-mvc-2/dashboard
     ...
   }
   ```
+
+# 5. 필터, 인터셉터
+필터, 스프링 인터셉터 흐름  
+```
+HTTP 요청 -> WAS -> 필터체인(필터1,2,3) -> 서블릿 -> 스프링 인터셉터체인(인터셉터1,2,3) -> 컨트롤러
+```  
+  
+- 서블릿 필터  
+필터가 호출 된 다음에 서블릿이 호출되며. 모든 고객의 요청 로그를 남기는 요구사항이 있다면 필터를 사용하면 됨.  
+참고로 필터는 특정 URL 패턴에 적용할 수 있음(`/*` 이라고 하면 모든 요청에 필터가 적용됨.)  
+  
+  <필터 인터페이스>  
+  ```
+  public interface Filter {
+    /* 필터 초기화 메서드, 서블릿 컨테이너가 생성될 때 호출됨 */
+    public default void init(FilterConfig filterConfig) throws ServletException {}
+  
+    /* HTTP 요청이 오면 doFilter 가 호출됨
+     * 또한, chain.doFilter(request, response)을 통해 다음 필터가 있으면 필터를 호출하고, 필터가 없으면 서블릿을 호출.
+     * 만약 이 로직을 호출하지 않으면 다음 단계로 진행되지 않음. */
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+        throws IOException, ServletException;
+  
+    /* 필터 종료 메서드, 서블릿 컨테이너가 종료될 때 호출됨 */
+    public default void destroy() {}
+  }
+  ```  
+  
+  스프링 부트를 사용한다면 `FilterRegistrationBean` 을 사용해서 다음과 같이 등록하면 됨.  
+  ```
+  @Configuration
+  public class WebConfig {
+    @Bean
+    public FilterRegistrationBean logFilter() {
+      FilterRegistrationBean<Filter> filterRegistrationBean = new FilterRegistrationBean<>();
+  
+      filterRegistrationBean.setFilter(new LogFilter());  // 등록할 필터를 지정
+      filterRegistrationBean.setOrder(1);                 // 체인 순서 지정 
+      filterRegistrationBean.addUrlPatterns("/*");        // 필터를 적용할 URL 패턴을 지정
+      return filterRegistrationBean;
+  } }
+  ```
+
+- 스프링 인터셉터 : 스프링 인터셉터는 디스패처 서블릿과 컨트롤러 사이에서 컨트롤러 호출 직전에 호출됨.  
+  스프링 인터셉터는 체인으로 구성되는데, 중간에 인터셉터를 자유롭게 추가할 수 있음.  
+  
+  <스프링 인터셉터 인터페이스>
+  ```
+  public interface HandlerInterceptor {
+  
+    /* 컨트롤러 호출 전에 호출됨.(정확히는 핸들러 어댑터 호출 전에 호출)
+     * 응답값이 `true` 이면 다음으로 진행하고, `false` 이면 더는 진행하지 않음. */
+    default boolean preHandle(
+          HttpServletRequest request,
+          HttpServletResponse response,
+          Object handler
+    ) throws Exception {};
+
+    /* 컨트롤러 호출 후에 호출됨.(정확히는 핸들러 어댑터 호출 후에 호출)
+     * 만약 컨트롤러에서 예외가 발생하면 postHandle은 호출되지 않음. */  
+    default void postHandle(
+          HttpServletRequest request,
+          HttpServletResponse response,
+          Object handler,
+          @Nullable ModelAndView modelAndView
+    ) throws Exception {};
+
+    /* 뷰가 렌더링 된 이후에 호출
+     * 예외 여부와 상관없이 항상 호출되기에 예외 로그 출력에 용이 */
+    default void afterCompletion(
+          HttpServletRequest request,
+          HttpServletResponse response,
+          Object handler,
+          @Nullable Exception ex
+    ) throws Exception {};
+  ```
+
+  [스프링 인터셉터 호출 흐름]  
+  ![image](https://github.com/hyeda2020/Springmvc2-form/assets/139141270/39ae1f1f-6419-43fa-a165-0f8edf0b9b6a)
+    
+  다음과 같이 WebMvcConfigurer 가 제공하는 `addInterceptors()` 를 사용해서 인터셉터를 등록할 수 있음.
+  ```
+  @Configuration
+  public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new LogInterceptor())
+                .order(1)                  // 인터셉터의 호출 순서 지정
+                .addPathPatterns("/**")    // 인터셉터를 적용할 URL 패턴을 지정
+                .excludePathPatterns("/css/**", "/*.ico", "/error"); // 인터셉터에서 제외할 패턴 지정
+    }
+  }
+  ```
+  
