@@ -361,4 +361,20 @@ HTTP 요청 -> WAS -> 필터체인(필터1,2,3) -> 서블릿 -> 스프링 인터
     }
   }
   ```
-  
+
+  # 6. 예외 처리와 오류 페이지
+  스프링 부트가 자동 등록한 `BasicErrorController` 는 오류가 발생했을 때 오류 페이지로 `/error` 를 기본 요청.  
+  개발자는 오류 페이지 화면만 `BasicErrorController` 가 제공하는 룰과 우선순위에 따라서 등록하면 됨.
+
+  - 뷰 선택 우선순위(`BasicErrorController` 의 처리 순서)  
+    1. 뷰템플릿  
+       - `resources/templates/error/500.html`  
+       - `resources/templates/error/5xx.html`  
+    2. 정적 리소스(`static`, `public`)  
+       - `resources/static/error/400.html`  
+       - `resources/static/error/404.html`  
+       - `resources/static/error/4xx.html`  
+    3. 적용 대상이 없을 때 뷰 이름(`error`)  
+       - `resources/templates/error.html`
+    
+    해당 경로 위치에 HTTP 상태 코드 이름의 뷰 파일을 넣어두면 됨.  
