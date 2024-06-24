@@ -362,7 +362,7 @@ HTTP 요청 -> WAS -> 필터체인(필터1,2,3) -> 서블릿 -> 스프링 인터
   }
   ```
 
-  # 6. 예외 처리와 오류 페이지
+# 6. 예외 처리와 오류 페이지
   스프링 부트가 자동 등록한 `BasicErrorController` 는 오류가 발생했을 때 오류 페이지로 `/error` 를 기본 요청.  
   개발자는 오류 페이지 화면만 `BasicErrorController` 가 제공하는 룰과 우선순위에 따라서 등록하면 됨.
 
@@ -378,3 +378,44 @@ HTTP 요청 -> WAS -> 필터체인(필터1,2,3) -> 서블릿 -> 스프링 인터
        - `resources/templates/error.html`
     
     해당 경로 위치에 HTTP 상태 코드 이름의 뷰 파일을 넣어두면 됨.  
+
+# 7. API 예외 처리
+  - `@ExceptionHandler` : 스프링에서 API 예외 처리 문제를 해결하기 위해 제공하는 매우 편리한 예외 처리 기능이며,
+    `@ExceptionHandler` 애노테이션을 선언하고, 다음과 같이 해당 컨트롤러에서 처리하고 싶은 예외를 지정해주면 됨.
+
+    ```
+    @Slf4j
+    @RestController
+    public class ApiExceptionController {
+
+      /* BAD Request일 경우에 대한 예외 처리 */
+      @ResponseStatus(HttpStatus.BAD_REQUEST)
+      @ExceptionHandler(IllegalArgumentException.class)
+      public ResponseEntity<ErrorResult> illegalExHandle(IllegalArgumentException e) {
+        log.error("[exceptionHandle] ex", e);
+        ErrorResult errorResult = new ErrorResult("BAD", e.getMessage());
+        return new ResponseEntity<>(errorResult, HttpStatus.BAD_REQUEST);
+      }
+      ...
+    }
+    ```
+    
+  - `@ControllerAdvice` : `@ExceptionHandler` 를 사용해서 예외를 깔끔하게 처리할 수 있게 되었지만,  
+    정상 코드와 예외 처리 코드가 하나의 컨트롤러에 섞이게 되는 문제가 발생.  
+    -> `@ControllerAdvice` 또는 `@RestControllerAdvice` 를 사용하여 둘을 분리.  
+
+    ```
+    @Slf4j
+    @RestControllerAdvice  // @ControllerAdvice` 에 대상을 지정하지 않으면 모든 컨트롤러에 적용.
+    public class ExControllerAdvice {
+      @ResponseStatus(HttpStatus.BAD_REQUEST)
+      @ExceptionHandler(IllegalArgumentException.class)
+      public ResponseEntity<ErrorResult> illegalExHandle(IllegalArgumentException e) {
+        log.error("[exceptionHandle] ex", e);
+        ErrorResult errorResult = new ErrorResult("BAD", e.getMessage());
+        return new ResponseEntity<>(errorResult, HttpStatus.BAD_REQUEST);
+      }
+      ...
+    }
+    ```
+    
