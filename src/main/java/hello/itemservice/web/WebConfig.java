@@ -4,14 +4,16 @@ import hello.itemservice.web.filter.LogFilter;
 import hello.itemservice.web.filter.LoginCheckFilter;
 import hello.itemservice.web.interceptor.LogInterceptor;
 import hello.itemservice.web.interceptor.LoginCheckInterceptor;
+import hello.typeconverter.converter.IpPortToStringConverter;
+import hello.typeconverter.converter.StringToIpPortConverter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.servlet.Filter;
-import javax.servlet.FilterRegistration;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -49,5 +51,17 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/", "/members/add", "/login", "/logout", "/css/**", "/*.ico", "/error"
                 );
+    }
+
+    /**
+     * WebMvcConfigurer 가 제공하는 addFormatters()를 사용해서 추가하고 싶은 컨버터를 등록.
+     * 이렇게 하면 스프링은 내부에서 사용하는 ConversionService 에 컨버터를 추가해줌.
+     */
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+
+        /* 사용자 지정 Converter 등록(기본적인 Converter들은 스프링에서 제공) */
+        registry.addConverter(new StringToIpPortConverter());
+        registry.addConverter(new IpPortToStringConverter());
     }
 }
