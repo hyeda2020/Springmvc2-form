@@ -406,8 +406,9 @@ HTTP 요청 -> WAS -> 필터체인(필터1,2,3) -> 서블릿 -> 스프링 인터
 
     ```
     @Slf4j
-    @RestControllerAdvice  // @ControllerAdvice` 에 대상을 지정하지 않으면 모든 컨트롤러에 적용.
+    @RestControllerAdvice  // @ControllerAdvice 에 대상을 지정하지 않으면 모든 컨트롤러에 적용.
     public class ExControllerAdvice {
+    
       @ResponseStatus(HttpStatus.BAD_REQUEST)
       @ExceptionHandler(IllegalArgumentException.class)
       public ResponseEntity<ErrorResult> illegalExHandle(IllegalArgumentException e) {
