@@ -6,6 +6,7 @@ import hello.itemservice.web.interceptor.LogInterceptor;
 import hello.itemservice.web.interceptor.LoginCheckInterceptor;
 import hello.typeconverter.converter.IpPortToStringConverter;
 import hello.typeconverter.converter.StringToIpPortConverter;
+import hello.typeconverter.formatter.MyNumberFormatter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -63,5 +64,12 @@ public class WebConfig implements WebMvcConfigurer {
         /* 사용자 지정 Converter 등록(기본적인 Converter들은 스프링에서 제공) */
         registry.addConverter(new StringToIpPortConverter());
         registry.addConverter(new IpPortToStringConverter());
+
+        /**
+         * 스프링부트는 DefaultFormattingConversionService 를 상속받은
+         * WebConversionService 를 내부에서 사용하기 때문에
+         * 컨버터뿐만 아니라 포맷터도 등록 가능
+         */
+        registry.addFormatter(new MyNumberFormatter());
     }
 }
