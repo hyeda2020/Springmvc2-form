@@ -419,4 +419,98 @@ HTTP 요청 -> WAS -> 필터체인(필터1,2,3) -> 서블릿 -> 스프링 인터
       ...
     }
     ```
+
+# 8. 스프링 타입 컨버터
+- 타입 컨버터(Converter)  
+  가령, 다음과 같이 컨트롤러에 IP, Port번호가 문자열로 들어오는 것을 IpPort라는 사용자 지정 객체로 타입을 변환해야 하는 경우  
+  ```
+  @RestController
+  public class AddrController {
+    @GetMapping("/addr")
+    public String helloV1(@RequestParam IpPort ipPort) { ... }
+  }
+  ```
     
+  스프링에서 제공하는 컨버터 인터페이스를 직접 구현하여 정의한 뒤, `ConversionService`에 등록하여 사용하면 됨.  
+  ```
+  /**
+   * 사용자 지정 객체 IpPort로 변환하는 컨버터(String -> IpPort)
+   * ex) "127.0.0.1:8080" -> IpPort("127.0.0.1", 8080)
+   */
+  public class StringToIpPortConverter implements Converter<String, IpPort> {
+    @Override
+    public IpPort convert(String source) {
+      String[] split = source.split(":");
+      String ip = split[0];
+      int port = Integer.parseInt(split[1]);
+      return new IpPort(ip, port);
+    }
+  }
+  ```
+
+- 포맷터(Formattr)  
+  컨버터는 범용적인 타입 변환 기능을 제공하는 반면,  
+  포맷터는 문자를 다른 타입으로 변환하거나, 다른 타입을 문자로 변환하는 경우에 주로 유용하게 사용.  
+
+    
+  ※ Converter vs Formatter  
+  - Converter는 범용(객체 객체)  
+  - Formatter는 문자에 특화(객체 문자, 문자 객체) + 현지화(Locale)
+     
+  ```
+  /** 사용자 지정 포맷터
+   * "1,000" 처럼 숫자 중간의 쉼표를 적용하려면 자바가 기본으로 제공하는 NumberFormat 객체를 사용
+   */
+  public class MyNumberFormatter implements Formatter<Number> {
+    @Override
+    public Number parse(String text, Locale locale) throws ParseException {
+      return NumberFormat.getInstance(locale).parse(text); // 문자를 숫자로 변환
+    }
+  
+    @Override
+    public String print(Number object, Locale locale) {
+      return NumberFormat.getInstance(locale).format(object); // 객체를 문자로 변환
+    }
+  }
+  ```
+
+- 스프링이 제공하는 기본 포맷터  
+  포맷터는 기본 형식이 지정되어 있기 때문에, 객체의 각 필드마다 다른 형식으로 포맷을 지정하기는 어려움.  
+  스프링은 이런 문제를 해결하기 위해 애노테이션 기반으로 원하는 형식을 지정해서  
+  사용할 수 있는 매우 유용한 포맷터 두 가지를 기본으로 제공.  
+  - @NumberFormat : 숫자 관련 형식 지정 포맷터 사용  
+  - @DateTimeFormat : 날짜 관련 형식 지정 포맷터 사용  
+  ```
+  @Data
+  public class Form {
+    @NumberFormat(pattern = "###,###")
+    private Integer number;
+  
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime localDateTime;
+  }
+  ```
+    
+- 컨버전 서비스  
+  스프링은 개별 컨버터 & 포맷터를 모아두고 그것들을 묶어서 편리하게 사용할 수 있는 컨버전 서비스 기능을 제공.  
+  이를 통해 컨버터를 등록하는 부분과 사용하는 부분을 분리할 수 있어 컨버터를 사용하는 클라이언트는 등록하는 부분은 몰라도 되고,  
+  오직 컨버전 서비스에만 의존하면 됨.  
+  덕분에 컨버터를 사용하는 클라이언트와 컨버터를 등록하고 관리하는 클라이언트의 관심사를 명확하게 분리할 수 있음.  
+  다만, 이때 컨버전 서비스를 등록하는 부분과 사용하는 부분을 분리하고 의존관계 주입을 사용해야 함.  
+    
+  스프링은 내부에서 ConversionService 를 제공하기 때문에 아래처럼 WebMvcConfigurer가 제공하는 addFormatters()를 사용해서  
+  추가하고 싶은 컨버터를 등록하면 됨.  
+
+  ```
+  @Configuration
+  public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+      // 컨버전 서비스에 사용자 지정 컨버터 등록
+      registry.addConverter(new StringToIpPortConverter());
+      // 컨버전 서비스에 사용자 지정 포맷터 등록
+      registry.addFormatter(new MyNumberFormatter());
+    }
+  }
+  ```  
+  
